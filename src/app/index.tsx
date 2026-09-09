@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 
+/** Renders the app's welcome screen. */
 export default function App() {
   return (
     <View className="flex-1 items-center justify-center bg-white">
