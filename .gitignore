@@ -3,6 +3,11 @@
 # dependencies
 node_modules/
 
+# local model weights
+models/
+*.gguf
+*.safetensors
+
 # Expo
 .expo/
 dist/
