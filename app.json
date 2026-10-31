@@ -8,7 +8,6 @@
     "scheme": "offlinellm",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "appleTeamId": "236D4NWXT4",
       "bundleIdentifier": "com.masoudalizai.offlinellm",
       "icon": "./assets/expo.icon"
     },

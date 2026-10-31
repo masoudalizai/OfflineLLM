@@ -1,4 +1,5 @@
 import * as DocumentPicker from "expo-document-picker";
+import { File, Paths } from "expo-file-system";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -46,7 +47,29 @@ export default function ChatScreen() {
   const busy = useRef(false);
   const mounted = useRef(true);
   const stopRequested = useRef(false);
+  const ownedCacheUris = useRef(new Set<string>());
   const working = phase !== "idle";
+
+  function trackOwnedCacheUri(uri: string) {
+    if (Platform.OS === "web") return;
+    const cacheRoot = Paths.cache.uri.endsWith("/") ? Paths.cache.uri : `${Paths.cache.uri}/`;
+    if (uri.startsWith(cacheRoot)) ownedCacheUris.current.add(uri);
+  }
+
+  function deleteOwnedCacheUri(uri?: string) {
+    if (!uri || !ownedCacheUris.current.has(uri)) return;
+    try {
+      const file = new File(uri);
+      if (file.exists) file.delete();
+      ownedCacheUris.current.delete(uri);
+    } catch {
+      // Keep the URI registered so a later lifecycle cleanup can retry it.
+    }
+  }
+
+  function deleteAllOwnedCacheFiles() {
+    for (const uri of ownedCacheUris.current) deleteOwnedCacheUri(uri);
+  }
 
   useEffect(() => {
     mounted.current = true;
@@ -56,8 +79,13 @@ export default function ChatScreen() {
       void (async () => {
         await session.current?.stop().catch(() => {});
         await activeJob.current?.catch(() => {});
-        await session.current?.release().catch(() => {});
-        session.current = null;
+        try {
+          await session.current?.release();
+          session.current = null;
+          deleteAllOwnedCacheFiles();
+        } catch {
+          // Keep cached model files if native release fails.
+        }
       })();
     };
   }, []);
@@ -83,11 +111,23 @@ export default function ChatScreen() {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*", multiple: false, copyToCacheDirectory: true,
       });
-      if (result.canceled || !mounted.current) return;
+      if (result.canceled) return;
       const file = result.assets[0];
-      validateGguf(file);
+      trackOwnedCacheUri(file.uri);
+      if (!mounted.current) {
+        deleteOwnedCacheUri(file.uri);
+        return;
+      }
+      try {
+        validateGguf(file);
+      } catch (cause) {
+        deleteOwnedCacheUri(file.uri);
+        throw cause;
+      }
+      const previous = kind === "base" ? base : adapter;
       if (kind === "base") setBase(file);
       else { setAdapter(file); setUseAdapter(true); }
+      if (previous?.uri !== file.uri) deleteOwnedCacheUri(previous?.uri);
     });
   }
 
@@ -111,7 +151,15 @@ export default function ChatScreen() {
     run("unloading", async () => {
       await session.current?.release();
       session.current = null;
-      if (mounted.current) { setReady(false); setMessages([]); setStats(""); }
+      deleteAllOwnedCacheFiles();
+      if (mounted.current) {
+        setBase(undefined);
+        setAdapter(undefined);
+        setUseAdapter(false);
+        setReady(false);
+        setMessages([]);
+        setStats("");
+      }
     });
   }
 

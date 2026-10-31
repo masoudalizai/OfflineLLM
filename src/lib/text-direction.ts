@@ -15,8 +15,9 @@ export function getTextDirection(text: string): TextDirection {
   for (const character of text) {
     const codePoint = character.codePointAt(0);
     if (codePoint === undefined) continue;
-    if (isRtlCodePoint(codePoint)) return "rtl";
-    if (/\p{L}/u.test(character)) return "ltr";
+    const isLetter = /\p{L}/u.test(character);
+    if (isRtlCodePoint(codePoint) && isLetter) return "rtl";
+    if (isLetter) return "ltr";
   }
   return "ltr";
 }

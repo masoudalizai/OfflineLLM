@@ -10,6 +10,7 @@ const options = { base, adapterScale: 1, gpuLayers: 0 };
 test("detects Dari and Pashto as RTL from the first strong character", () => {
   assert.equal(getTextDirection("سلام، حالت چطور است؟"), "rtl");
   assert.equal(getTextDirection("... ۱۲۳ پښتو ژبه"), "rtl");
+  assert.equal(getTextDirection("۱۲۳ English text"), "ltr");
   assert.equal(getTextDirection("(42) English text"), "ltr");
   assert.equal(getTextDirection("12345"), "ltr");
 });
