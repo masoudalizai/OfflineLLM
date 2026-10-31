@@ -8,9 +8,12 @@
     "scheme": "offlinellm",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "appleTeamId": "236D4NWXT4",
+      "bundleIdentifier": "com.masoudalizai.offlinellm",
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.masoudalizai.offlinellm",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -31,6 +34,15 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      "llama.rn",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true
+          }
         }
       ]
     ],
